@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寻光园</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #ffffff00;
+        }
+        
+        #garden {
+            width: 70vw;
+            height: 90vh;
+            max-width: 1500px;
+            max-height: 900px;
+            background-image: url('garden.jpg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #ccc;
+        }
+        
+        /* 下半部分点击区域可视化（调试时可取消注释） */
+        /*
+        #garden::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: rgba(255, 0, 0, 0.2);
+            pointer-events: none;
+        }
+        */
+        
+        .flower-animation {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .animation-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div id="garden"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const garden = document.getElementById('garden');
+            
+            // 动画配置
+            const animations = {
+                bloom: {
+                    url: 'bloom.gif',
+                    duration: 3000,
+                    loopCount: 1
+                },
+                wither: {
+                    url: 'wither.gif',
+                    duration: 5000,
+                    loopCount: 1
+                }
+            };
+            
+            // 预加载图片
+            Object.values(animations).forEach(anim => {
+                const img = new Image();
+                img.src = anim.url;
+            });
+            
+            garden.addEventListener('click', function(e) {
+                const rect = garden.getBoundingClientRect();
+                const clickY = e.clientY - rect.top; // 点击位置相对于花园的Y坐标
+                const gardenHeight = rect.height;
+                
+                // 只在下半部分(50%以下)点击有效
+                if (clickY > gardenHeight * 0.4) {
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    createAnimation(x, y);
+                }
+            });
+            
+            function createAnimation(x, y) {
+                const animContainer = document.createElement('div');
+                animContainer.className = 'flower-animation';
+                animContainer.style.left = `${x}px`;
+                animContainer.style.top = `${y}px`;
+                garden.appendChild(animContainer);
+                
+                // 播放开花动画
+                playGifAnimation(animContainer, animations.bloom, () => {
+                    setTimeout(() => {
+                        // 播放凋零动画
+                        playGifAnimation(animContainer, animations.wither, () => {
+                            animContainer.remove();
+                        });
+                    }, 10000);
+                });
+            }
+            
+            function playGifAnimation(container, animConfig, onComplete) {
+                const img = document.createElement('img');
+                img.className = 'animation-img';
+                img.src = animConfig.url + '?t=' + Date.now();
+                
+                container.innerHTML = '';
+                container.appendChild(img);
+                
+                setTimeout(onComplete, animConfig.duration);
+            }
+        });
+    </script>
+</body>
+</html>
